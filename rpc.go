@@ -205,6 +205,7 @@ func pluginRegistration() registration {
 				{Name: "analysis_cache_ttl_seconds", Type: pluginapi.ConfigFieldTypeInteger, Description: "data URI 分析缓存秒数。默认值 / Data-URI analysis cache TTL in seconds. Default: 900."},
 				{Name: "analysis_url_cache_ttl_seconds", Type: pluginapi.ConfigFieldTypeInteger, Description: "URL 图片分析缓存秒数。默认值 / URL-image analysis cache TTL in seconds. Default: 120."},
 				{Name: "agent_reanalysis_enabled", Type: pluginapi.ConfigFieldTypeBoolean, Description: "允许受控 Agent 图片重分析；可能向文本模型保留严格校验的 Codex 附件路径。默认关闭。/ Enable controlled agent image reanalysis; may preserve strictly validated Codex attachment paths for the text model. Default: false."},
+				{Name: "claude_tool_result_single_block_compat", Type: pluginapi.ConfigFieldTypeBoolean, Description: "将 Claude tool_result 的改写文本合并为首个 text block，兼容只读取 content[0] 的模型（如 GLM）。默认关闭。/ Merge rewritten Claude tool_result text into the first text block for models that only consume content[0] (such as GLM). Default: false."},
 				{Name: "trace_enabled", Type: pluginapi.ConfigFieldTypeBoolean, Description: "完整明文调试 trace；包含请求、图片引用和模型结果，仅临时开启。默认值 / Full plaintext debug trace; includes requests, image references, and model results. Enable temporarily. Default: false."},
 			},
 		},

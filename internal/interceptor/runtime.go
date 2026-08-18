@@ -264,11 +264,12 @@ func (r *Runtime) Handle(req pluginapi.RequestInterceptRequest) (resp pluginapi.
 	defer cancel()
 
 	plan, planErr := adapter.Discover(req.Body, downstream.Options{
-		MaxImages:              cfg.EmergencyMaxImagesPerRequest,
-		MaxReferenceBytes:      cfg.MaxImageReferenceBytes,
-		MaxBodyBytes:           cfg.MaxRequestBytes,
-		MaxResultChars:         cfg.MaxResultChars,
-		AgentReanalysisEnabled: cfg.AgentReanalysisEnabled,
+		MaxImages:                   cfg.EmergencyMaxImagesPerRequest,
+		MaxReferenceBytes:           cfg.MaxImageReferenceBytes,
+		MaxBodyBytes:                cfg.MaxRequestBytes,
+		MaxResultChars:              cfg.MaxResultChars,
+		AgentReanalysisEnabled:      cfg.AgentReanalysisEnabled,
+		ClaudeToolResultSingleBlock: cfg.ClaudeToolResultSingleBlock,
 	})
 	if ctx.Err() != nil {
 		return r.terminateVisionFailure(ctx, state, protocol, normalizeVisionFailure(ctx.Err(), cfg.VisionModel)), nil

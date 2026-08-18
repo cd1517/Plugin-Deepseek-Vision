@@ -23,6 +23,7 @@ an invalid update leaves the previous snapshot active.
 | `analysis_cache_ttl_seconds` | Data-URI analysis TTL | 900 |
 | `analysis_url_cache_ttl_seconds` | URL-image analysis TTL | 120 |
 | `agent_reanalysis_enabled` | Opt-in controlled rich tool-output reanalysis | `false` |
+| `claude_tool_result_single_block_compat` | Merge rewritten Claude `tool_result` text into `content[0]` for Anthropic-compatible models that ignore later blocks | `false` |
 | `trace_enabled` | Full plaintext debug trace | `false` |
 
 The native ABI applies an additional process-wide admission budget of 32 MiB of
@@ -51,10 +52,20 @@ translation, transport, retry, and credential policy.
 The CPAMC form exposes `target_models`, `vision_model`, ordered
 `vision_fallback_models`, `language`, global in-flight vision requests, the
 emergency image ceiling, total timeout, the three cache controls,
-`agent_reanalysis_enabled`, and a boolean `trace_enabled` switch. Array fields
+`agent_reanalysis_enabled`, the Claude tool-result single-block compatibility
+switch, and a boolean `trace_enabled` switch. Array fields
 use JSON array syntax. Their descriptions include bilingual defaults; key
 integer controls also state their validation ranges. Advanced size controls
 remain available through YAML.
+
+`claude_tool_result_single_block_compat: true` is a narrow workaround for
+Anthropic-compatible downstreams such as GLM deployments that consume only
+`tool_result.content[0]`. After image preprocessing, the plugin merges the
+tool result's existing text, image markers, and joint visual analysis into the
+first text block. Outer `tool_result` fields and remaining non-text blocks are
+preserved. Direct images in ordinary Claude user-message content retain the
+standard multi-block Anthropic shape. Keep the switch disabled unless the
+downstream exhibits this compatibility problem.
 
 ## Full-context debug trace
 

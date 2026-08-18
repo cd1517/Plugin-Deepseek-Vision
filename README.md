@@ -214,6 +214,7 @@ plugins/<GOOS>/<GOARCH>/deepseek-vision.<ext>
 | `analysis_cache_ttl_seconds` | `900` | data URI 分析缓存秒数 |
 | `analysis_url_cache_ttl_seconds` | `120` | URL 图片分析缓存秒数 |
 | `agent_reanalysis_enabled` | `false` | 允许受控 rich tool-output 重分析；可能保留严格校验的 Codex 附件路径 |
+| `claude_tool_result_single_block_compat` | `false` | 将 Claude `tool_result` 的文本、图片标记和联合分析合并到首个 text block，兼容只读取 `content[0]` 的 GLM 等模型；普通用户图片不受影响 |
 
 ### 可选：手动写入配置
 

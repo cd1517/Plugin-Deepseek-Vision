@@ -105,6 +105,100 @@ func TestClaudeDirectAndToolResultDiscoveryAndRewrite(t *testing.T) {
 	}
 }
 
+func TestClaudeToolResultSingleBlockCompat(t *testing.T) {
+	contents := []struct {
+		name    string
+		content string
+		markers int
+	}{
+		{name: "text then image", content: `[{"type":"text","text":"before"},{"type":"image","source":{"type":"url","url":"https://example.com/a.png"}}]`, markers: 1},
+		{name: "image then text", content: `[{"type":"image","source":{"type":"url","url":"https://example.com/a.png"}},{"type":"text","text":"after"}]`, markers: 1},
+		{name: "image only", content: `[{"type":"image","source":{"type":"url","url":"https://example.com/a.png"}}]`, markers: 1},
+		{name: "multiple images", content: `[{"type":"image","source":{"type":"url","url":"https://example.com/a.png"}},{"type":"image","source":{"type":"url","url":"https://example.com/b.png"}}]`, markers: 2},
+	}
+	for _, test := range contents {
+		t.Run(test.name, func(t *testing.T) {
+			body := []byte(`{"messages":[{"role":"assistant","content":[{"type":"tool_result","tool_use_id":"tool-1","content":` + test.content + `}]}]}`)
+			plan, err := discoverClaude(body, Options{ClaudeToolResultSingleBlock: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			rewritten, err := plan.RewriteGroupsText([]string{"analysis result"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var object map[string]any
+			if err := json.Unmarshal(rewritten, &object); err != nil {
+				t.Fatal(err)
+			}
+			tool := object["messages"].([]any)[0].(map[string]any)["content"].([]any)[0].(map[string]any)
+			blocks := tool["content"].([]any)
+			if len(blocks) != 1 {
+				t.Fatalf("compat content = %#v", blocks)
+			}
+			merged := blocks[0].(map[string]any)["text"].(string)
+			if strings.Count(merged, "[Image ") != test.markers || !strings.Contains(merged, "Joint visual analysis") || !strings.Contains(merged, "analysis result") {
+				t.Fatalf("merged text = %q", merged)
+			}
+			second, err := discoverClaude(rewritten, Options{ClaudeToolResultSingleBlock: true})
+			if err != nil || second.HasImages() {
+				t.Fatalf("rewritten discovery: images=%v err=%v", second.HasImages(), err)
+			}
+			again, err := second.RewriteGroupsText(nil)
+			if err != nil || string(again) != string(rewritten) {
+				t.Fatalf("idempotent rewrite changed body: err=%v body=%s", err, again)
+			}
+		})
+	}
+}
+
+func TestClaudeToolResultSingleBlockCompatPreservesBoundaries(t *testing.T) {
+	body := []byte(`{"messages":[` +
+		`{"role":"user","content":[{"type":"image","source":{"type":"url","url":"https://example.com/direct.png"}}]},` +
+		`{"role":"assistant","content":[{"type":"tool_result","tool_use_id":"tool-1","is_error":true,"extra":"keep","content":[` +
+		`{"type":"text","text":"before","cache_control":{"type":"ephemeral"}},` +
+		`{"type":"custom_a","value":1},` +
+		`{"type":"image","source":{"type":"url","url":"https://example.com/tool.png"}},` +
+		`{"type":"text","text":"after"},` +
+		`{"type":"custom_b","value":2}` +
+		`]}]}]}`)
+	plan, err := discoverClaude(body, Options{ClaudeToolResultSingleBlock: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rewritten, err := plan.RewriteGroupsText([]string{"direct analysis", "tool analysis"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var object map[string]any
+	if err := json.Unmarshal(rewritten, &object); err != nil {
+		t.Fatal(err)
+	}
+	messages := object["messages"].([]any)
+	direct := messages[0].(map[string]any)["content"].([]any)
+	if len(direct) != 2 {
+		t.Fatalf("ordinary user content was coalesced: %#v", direct)
+	}
+	tool := messages[1].(map[string]any)["content"].([]any)[0].(map[string]any)
+	if tool["tool_use_id"] != "tool-1" || tool["is_error"] != true || tool["extra"] != "keep" {
+		t.Fatalf("outer tool_result fields changed: %#v", tool)
+	}
+	blocks := tool["content"].([]any)
+	if len(blocks) != 3 || blocks[1].(map[string]any)["type"] != "custom_a" || blocks[2].(map[string]any)["type"] != "custom_b" {
+		t.Fatalf("non-text blocks changed: %#v", blocks)
+	}
+	merged := blocks[0].(map[string]any)
+	text := merged["text"].(string)
+	for _, want := range []string{"before", "after", "already analyzed", "Joint visual analysis", "tool analysis"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("merged text missing %q: %q", want, text)
+		}
+	}
+	if merged["cache_control"].(map[string]any)["type"] != "ephemeral" {
+		t.Fatalf("cache_control not carried: %#v", merged)
+	}
+}
+
 func TestClaudePromptFallbackAndIndependentToolGroups(t *testing.T) {
 	body := []byte(`{"messages":[` +
 		`{"role":"user","content":[{"type":"text","text":"old visible request"}]},` +

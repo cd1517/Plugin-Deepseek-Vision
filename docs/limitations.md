@@ -17,6 +17,11 @@
 - Responses and Chat accept validated HTTP(S)/data-URI references. Claude
   accepts validated URL and base64 image sources. Unsupported image references
   fail closed rather than being forwarded.
+- Anthropic's standard multi-block `tool_result.content` rewrite remains the
+  default. Some GLM/Anthropic-compatible deployments consume only
+  `content[0]`; enable `claude_tool_result_single_block_compat` to merge the
+  rewritten tool-result text into that first block. The workaround is scoped
+  to nested tool results and does not alter ordinary Claude user-image blocks.
 - Plain string `function_call_output.output` values are valid non-image tool
   results and pass through unchanged. Array outputs are scanned for rich
   `input_image` content and converted as prompt groups.

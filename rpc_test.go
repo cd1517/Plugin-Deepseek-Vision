@@ -33,22 +33,23 @@ func TestRegisterEnvelopeAndCapabilities(t *testing.T) {
 	if result.SchemaVersion != 2 || !result.Capabilities.RequestInterceptor || result.Metadata.Name != pluginName {
 		t.Fatalf("registration = %#v", result)
 	}
-	if len(result.Metadata.ConfigFields) != 12 {
-		t.Fatalf("config field count = %d, want 12 fields", len(result.Metadata.ConfigFields))
+	if len(result.Metadata.ConfigFields) != 13 {
+		t.Fatalf("config field count = %d, want 13 fields", len(result.Metadata.ConfigFields))
 	}
 	wantFields := map[string]pluginapi.ConfigFieldType{
-		"target_models":                    pluginapi.ConfigFieldTypeArray,
-		"vision_model":                     pluginapi.ConfigFieldTypeString,
-		"vision_fallback_models":           pluginapi.ConfigFieldTypeArray,
-		"language":                         pluginapi.ConfigFieldTypeEnum,
-		"max_inflight_vision_requests":     pluginapi.ConfigFieldTypeInteger,
-		"emergency_max_images_per_request": pluginapi.ConfigFieldTypeInteger,
-		"request_timeout_seconds":          pluginapi.ConfigFieldTypeInteger,
-		"analysis_cache_size":              pluginapi.ConfigFieldTypeInteger,
-		"analysis_cache_ttl_seconds":       pluginapi.ConfigFieldTypeInteger,
-		"analysis_url_cache_ttl_seconds":   pluginapi.ConfigFieldTypeInteger,
-		"agent_reanalysis_enabled":         pluginapi.ConfigFieldTypeBoolean,
-		"trace_enabled":                    pluginapi.ConfigFieldTypeBoolean,
+		"target_models":                          pluginapi.ConfigFieldTypeArray,
+		"vision_model":                           pluginapi.ConfigFieldTypeString,
+		"vision_fallback_models":                 pluginapi.ConfigFieldTypeArray,
+		"language":                               pluginapi.ConfigFieldTypeEnum,
+		"max_inflight_vision_requests":           pluginapi.ConfigFieldTypeInteger,
+		"emergency_max_images_per_request":       pluginapi.ConfigFieldTypeInteger,
+		"request_timeout_seconds":                pluginapi.ConfigFieldTypeInteger,
+		"analysis_cache_size":                    pluginapi.ConfigFieldTypeInteger,
+		"analysis_cache_ttl_seconds":             pluginapi.ConfigFieldTypeInteger,
+		"analysis_url_cache_ttl_seconds":         pluginapi.ConfigFieldTypeInteger,
+		"agent_reanalysis_enabled":               pluginapi.ConfigFieldTypeBoolean,
+		"claude_tool_result_single_block_compat": pluginapi.ConfigFieldTypeBoolean,
+		"trace_enabled":                          pluginapi.ConfigFieldTypeBoolean,
 	}
 	for _, field := range result.Metadata.ConfigFields {
 		if field.Description == "" {

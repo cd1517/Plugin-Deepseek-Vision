@@ -38,6 +38,11 @@ plugins:
       # attachment paths when the request declares view_image.
       agent_reanalysis_enabled: false
 
+      # Some Anthropic-compatible models (including GLM deployments) only
+      # consume tool_result.content[0]. Merge rewritten tool-result text into
+      # that first block without changing ordinary user-message image blocks.
+      claude_tool_result_single_block_compat: false
+
       # High-sensitivity debugging only. Writes complete plaintext request,
       # image references/data URIs, VLM payloads/results, and rewritten bodies to
       # logs/deepseek-vision-trace/. Credential headers remain redacted.

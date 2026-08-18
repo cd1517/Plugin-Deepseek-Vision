@@ -189,6 +189,13 @@ content 数组末尾追加一次联合分析。所有 message/tool 字段和非�
 直接 message 图片按 message 分组，每个 tool_result 单独分组。图片替换为 Anthropic
 text block，原图片的 `cache_control` 复制到对应标记，联合分析追加在相同容器内。
 
+默认保持上述标准多 block 结构。启用
+`claude_tool_result_single_block_compat` 后，仅对嵌套的 `tool_result.content[]`
+生效：现有文本、图片标记和联合分析按顺序合并到首个 text block，以兼容只读取
+`content[0]` 的 GLM 等 Anthropic-compatible 模型。外层 `tool_use_id`、`is_error`
+及未知字段不变，其余非文本块按原相对顺序保留；遇到的第一个 block-level
+`cache_control` 复制到合并后的 text block。普通用户 message 的直接图片不合并。
+
 ## 8. 受控 Agent 重分析
 
 只有配置 `agent_reanalysis_enabled: true` 且请求显式声明工具时才启用。支持

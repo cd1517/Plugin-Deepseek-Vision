@@ -27,8 +27,26 @@ func TestParseDefaults(t *testing.T) {
 	if cfg.AgentReanalysisEnabled || len(cfg.VisionFallbackModels) != 0 {
 		t.Fatalf("new feature defaults = %#v", cfg)
 	}
+	if cfg.ClaudeToolResultSingleBlock {
+		t.Fatal("Claude tool-result single-block compatibility must default to disabled")
+	}
 	if len(cfg.TargetModels) != 1 || cfg.TargetModels[0] != "deepseek-v4-flash" {
 		t.Fatalf("target models = %#v", cfg.TargetModels)
+	}
+}
+
+func TestClaudeToolResultSingleBlockCompatConfiguration(t *testing.T) {
+	enabled, err := ParseYAML([]byte("claude_tool_result_single_block_compat: true"))
+	if err != nil || !enabled.ClaudeToolResultSingleBlock {
+		t.Fatalf("enabled compatibility = %#v, err=%v", enabled, err)
+	}
+	disabled, err := ParseYAML([]byte("claude_tool_result_single_block_compat: false"))
+	if err != nil || disabled.ClaudeToolResultSingleBlock {
+		t.Fatalf("disabled compatibility = %#v, err=%v", disabled, err)
+	}
+	wrapper, err := ParseYAML([]byte("plugins:\n  configs:\n    deepseek-vision:\n      claude_tool_result_single_block_compat: true\n"))
+	if err != nil || !wrapper.ClaudeToolResultSingleBlock {
+		t.Fatalf("wrapped compatibility = %#v, err=%v", wrapper, err)
 	}
 }
 

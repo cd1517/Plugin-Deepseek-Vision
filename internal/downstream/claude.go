@@ -530,6 +530,9 @@ func (p *claudePlan) RewriteGroupsText(results []string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		if p.options.ClaudeToolResultSingleBlock && group.container.toolResultIndex >= 0 {
+			updated = coalesceClaudeToolResultTextBlocks(updated)
+		}
 		if replaced != len(group.Images) {
 			return nil, plannerError(ErrorRewriteVerification, 500, "not all discovered images were rewritten", claudeContainerPath(group.container))
 		}
@@ -684,6 +687,42 @@ func rewriteClaudeGroup(blocks []any, group claudePromptGroup, analysis string) 
 	}
 	updated = append(updated, map[string]any{"type": "text", "text": RenderGroupResult(group.PromptGroup, analysis)})
 	return updated, imageIndex, nil
+}
+
+// coalesceClaudeToolResultTextBlocks supports downstream models that only
+// consume tool_result.content[0]. It keeps every text fragment in traversal
+// order, moves the merged text to the first block, and retains all non-text
+// blocks in their original relative order.
+func coalesceClaudeToolResultTextBlocks(blocks []any) []any {
+	texts := make([]string, 0, len(blocks))
+	nonText := make([]any, 0, len(blocks))
+	var cacheControl any
+	hasCacheControl := false
+	for _, rawBlock := range blocks {
+		block, ok := rawBlock.(map[string]any)
+		if !ok {
+			nonText = append(nonText, rawBlock)
+			continue
+		}
+		if !hasCacheControl {
+			if value, exists := block["cache_control"]; exists {
+				cacheControl = value
+				hasCacheControl = true
+			}
+		}
+		if typeName, _ := block["type"].(string); typeName == "text" {
+			if value, ok := block["text"].(string); ok {
+				texts = append(texts, value)
+				continue
+			}
+		}
+		nonText = append(nonText, rawBlock)
+	}
+	merged := map[string]any{"type": "text", "text": strings.Join(texts, "\n\n")}
+	if hasCacheControl {
+		merged["cache_control"] = cacheControl
+	}
+	return append([]any{merged}, nonText...)
 }
 
 func claudeContainerPath(location claudeContainerLocation) string {

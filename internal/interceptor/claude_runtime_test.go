@@ -1,6 +1,7 @@
 package interceptor
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -38,6 +39,31 @@ func TestHandleClaudeRewritesDirectAndToolResultImages(t *testing.T) {
 	analyzer.mu.Unlock()
 	if len(batches) != 2 || len(batches[0]) != 1 || len(batches[1]) != 1 {
 		t.Fatalf("batches=%#v", batches)
+	}
+}
+
+func TestHandleClaudeToolResultSingleBlockCompat(t *testing.T) {
+	cfg := testConfig(t)
+	cfg.ClaudeToolResultSingleBlock = true
+	r := NewRuntime(func(*config.Config) (vision.Analyzer, error) { return &batchTestAnalyzer{}, nil })
+	r.Reconfigure(cfg)
+	defer r.Shutdown()
+	body := `{"messages":[{"role":"assistant","content":[{"type":"tool_result","tool_use_id":"tool_1","is_error":false,"content":[{"type":"text","text":"tool output"},{"type":"image","source":{"type":"url","url":"https://example.com/tool.png"}}]}]}]}`
+	resp, err := r.Handle(makeRequest("deepseek-v4-flash", "claude", "/v1/messages", body))
+	if err != nil || resp.Terminate {
+		t.Fatalf("response=%#v err=%v", resp, err)
+	}
+	var object map[string]any
+	if err := json.Unmarshal(resp.Body, &object); err != nil {
+		t.Fatal(err)
+	}
+	tool := object["messages"].([]any)[0].(map[string]any)["content"].([]any)[0].(map[string]any)
+	blocks := tool["content"].([]any)
+	if len(blocks) != 1 || !strings.Contains(blocks[0].(map[string]any)["text"].(string), "joint visual analysis") {
+		t.Fatalf("compat tool_result=%#v", tool)
+	}
+	if tool["tool_use_id"] != "tool_1" || tool["is_error"] != false {
+		t.Fatalf("tool_result fields changed: %#v", tool)
 	}
 }
 

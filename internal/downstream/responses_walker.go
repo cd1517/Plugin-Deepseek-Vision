@@ -28,12 +28,13 @@ const (
 // uses conservative defaults. MaxFocusChars is a character (rune) limit;
 // byte limits are measured in bytes of the UTF-8 request/reference.
 type Options struct {
-	MaxImages              int
-	MaxReferenceBytes      int
-	MaxBodyBytes           int
-	MaxFocusChars          int
-	MaxResultChars         int
-	AgentReanalysisEnabled bool
+	MaxImages                   int
+	MaxReferenceBytes           int
+	MaxBodyBytes                int
+	MaxFocusChars               int
+	MaxResultChars              int
+	AgentReanalysisEnabled      bool
+	ClaudeToolResultSingleBlock bool
 }
 
 func (o Options) normalized() Options {

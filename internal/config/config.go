@@ -50,6 +50,7 @@ type Config struct {
 	AnalysisCacheTTL             time.Duration
 	URLAnalysisCacheTTL          time.Duration
 	AgentReanalysisEnabled       bool
+	ClaudeToolResultSingleBlock  bool
 	TraceEnabled                 bool
 }
 
@@ -76,6 +77,7 @@ type rawConfig struct {
 	AnalysisCacheTTL             int      `yaml:"analysis_cache_ttl_seconds"`
 	URLAnalysisCacheTTL          int      `yaml:"analysis_url_cache_ttl_seconds"`
 	AgentReanalysisEnabled       bool     `yaml:"agent_reanalysis_enabled"`
+	ClaudeToolResultSingleBlock  bool     `yaml:"claude_tool_result_single_block_compat"`
 	TraceEnabled                 bool     `yaml:"trace_enabled"`
 
 	// Deprecated host-client fields, accepted and unconditionally ignored.
@@ -290,6 +292,9 @@ func validate(raw rawConfig, present map[string]bool) (*Config, error) {
 	if present["agent_reanalysis_enabled"] {
 		cfg.AgentReanalysisEnabled = raw.AgentReanalysisEnabled
 	}
+	if present["claude_tool_result_single_block_compat"] {
+		cfg.ClaudeToolResultSingleBlock = raw.ClaudeToolResultSingleBlock
+	}
 	if present["trace_enabled"] {
 		cfg.TraceEnabled = raw.TraceEnabled
 	}
@@ -322,6 +327,7 @@ func validate(raw rawConfig, present map[string]bool) (*Config, error) {
 		AnalysisCacheTTL:             time.Duration(cfg.AnalysisCacheTTL) * time.Second,
 		URLAnalysisCacheTTL:          time.Duration(cfg.URLAnalysisCacheTTL) * time.Second,
 		AgentReanalysisEnabled:       cfg.AgentReanalysisEnabled,
+		ClaudeToolResultSingleBlock:  cfg.ClaudeToolResultSingleBlock,
 		TraceEnabled:                 cfg.TraceEnabled,
 	}, nil
 }
@@ -437,6 +443,7 @@ func defaultRaw() defaults {
 		AnalysisCacheTTL:             DefaultAnalysisCacheTTL,
 		URLAnalysisCacheTTL:          DefaultURLCacheTTL,
 		AgentReanalysisEnabled:       false,
+		ClaudeToolResultSingleBlock:  false,
 		TraceEnabled:                 false,
 	}
 }
@@ -459,6 +466,7 @@ func defaultConfig() *Config {
 		AnalysisCacheTTL:             time.Duration(d.AnalysisCacheTTL) * time.Second,
 		URLAnalysisCacheTTL:          time.Duration(d.URLAnalysisCacheTTL) * time.Second,
 		AgentReanalysisEnabled:       d.AgentReanalysisEnabled,
+		ClaudeToolResultSingleBlock:  d.ClaudeToolResultSingleBlock,
 		TraceEnabled:                 d.TraceEnabled,
 	}
 }

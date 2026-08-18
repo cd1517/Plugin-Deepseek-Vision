@@ -222,6 +222,7 @@ as loaded, it is ready to use.
 | `analysis_cache_ttl_seconds` | `900` | Data-URI analysis TTL in seconds |
 | `analysis_url_cache_ttl_seconds` | `120` | URL-image analysis TTL in seconds |
 | `agent_reanalysis_enabled` | `false` | Enable controlled rich tool-output reanalysis; may retain strictly validated Codex attachment paths |
+| `claude_tool_result_single_block_compat` | `false` | Merge rewritten Claude `tool_result` text, image markers, and analysis into the first text block for models such as GLM that only consume `content[0]`; ordinary user images are unaffected |
 
 ### Optional manual configuration
 
